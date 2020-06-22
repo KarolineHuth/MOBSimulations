@@ -124,62 +124,6 @@ res_GGM <- res_GGM_prelim
 
 write_csv(res_GGM, "res_GGM_sim1000.csv")
 
-#### GGM-MOB - Jonas ####
-
-n <- 250 #c(250, 500, 750, 1000)
-p <- 5#c(5, 10, 15)
-prob <- .2
-delta_interaction <- 0 
-res_GGM_Jonas <- data.frame(iter = numeric(1000*length(n) *length(p)))
-counter <- 0
-
-for(pi in 1:length(p)) {
-  for(ni in 1:length(n)) {
-    for(i in 1:1000) {
-      counter <- counter + 1
-      
-      data <- GGMSimulationSplitJonas(p[pi], n[ni], prob, delta_interaction)
-      nodevars <- as.data.frame(data[, 2:(p[pi]+1)])
-      splitvars <- as.data.frame(data[, 1])
-      
-      # putting output in text-file
-      capture.output(networktree(nodevars, splitvars, method = c("mob"), model = "correlation", verbose = TRUE, minsplit = (n[ni]-50)/2), file = "out.txt")
-      out <- readr::read_delim("~/Documents/PhD/Programming/MOBSimulation/out.txt", delim = " ")
-      index <- which(grepl("p.value", t(out)))
-      
-      p.val <- as.vector(t(out))[index+1]
-      
-      res_GGM_Jonas$iter[counter] <- i
-      res_GGM_Jonas$n[counter] <- n[ni]
-      res_GGM_Jonas$p[counter] <- p[pi]
-      res_GGM_Jonas$model[counter] <- "GGM"
-      res_GGM_Jonas$pval[counter] <- p.val
-    }
-  }
-}
-
-# Quick Visualization of the density of the p-values
-res_GGM_Jonas$pval <- as.numeric(res_GGM_Jonas$pval)
-
-res_GGM_Jonas %>%
-  ggplot(aes(x = pval, color = as.factor(n))) +
-  geom_density() + 
-  facet_wrap(n ~ p )
-
-# plot cumulative distribution function
-par(mfrow = c(3,4))
-for(pi in p){
-  for(ni in n) {
-    sub <- res_GGM_Jonas %>%
-      filter(n == ni) %>%
-      filter(p == pi)
-    plot(ecdf(sub$pval), main = paste0("n=", ni, "p= ", pi), xlim = c(0,1))
-    lines(c(0,1), c(0, 1), col = "red")
-  }
-}
-
-
-
 #### LinearModel-MOB ####
 
 n <- c(50, 100, 250, 500, 1000)
